@@ -1,0 +1,73 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Chat</title>
+  <style>
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; }
+    #chat-box { width: 80%; height: 300px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; margin-top: 20px; }
+    #chat-box div { margin-bottom: 10px; }
+    #message-form { display: flex; width: 80%; margin-top: 10px; }
+    #message-form input { flex: 1; padding: 8px; margin-right: 10px; }
+    #message-form button { padding: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Simple Chat</h1>
+  <div id="chat-box"></div>
+  <form id="message-form">
+    <input type="text" id="username" placeholder="Your name" required>
+    <input type="text" id="message" placeholder="Type a message" required>
+    <button type="submit">Send</button>
+  </form>
+
+  <script>
+    const chatBox = document.getElementById('chat-box');
+    const messageForm = document.getElementById('message-form');
+    const usernameInput = document.getElementById('username');
+    const messageInput = document.getElementById('message');
+
+    // Function to fetch messages every 2 seconds
+    function fetchMessages() {
+      fetch('http://localhost:3000/messages')
+        .then(response => response.json())
+        .then(messages => {
+          chatBox.innerHTML = ''; // Clear the chat box
+          messages.forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = `${msg.user}: ${msg.text}`;
+            chatBox.appendChild(messageDiv);
+          });
+          chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the latest message
+        })
+        .catch(error => console.error('Error fetching messages:', error));
+    }
+
+    // Fetch messages on page load and then every 2 seconds
+    fetchMessages();
+    setInterval(fetchMessages, 2000);
+
+    // Send a new message to the server
+    messageForm.addEventListener('submit', event => {
+      event.preventDefault();
+      const user = usernameInput.value;
+      const text = messageInput.value;
+
+      if (user && text) {
+        fetch('http://localhost:3000/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user, text })
+        })
+        .then(() => {
+          messageInput.value = ''; // Clear input field after sending
+          fetchMessages(); // Refresh messages immediately after sending
+        })
+        .catch(error => console.error('Error sending message:', error));
+      }
+    });
+  </script>
+</body>
+</html>
